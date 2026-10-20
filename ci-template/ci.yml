@@ -1,0 +1,95 @@
+name: Kashif
+
+# Sync: pulls Ed25519-signed snapshots published by the Kashif dev agent and commits them to main.
+# Build: assembles the debug APK after every sync (or on manual run).
+on:
+  push:
+    paths: [".github/workflows/ci.yml"]
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: kashif
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.apply.outputs.changed }}
+    env:
+      TOPIC: kashif-sync-9d1cb80362dda51d5cc8ebb5
+    steps:
+      - name: Fetch latest signed announcement
+        id: msg
+        run: |
+          set -euo pipefail
+          line=$(curl -fsS "https://ntfy.sh/${TOPIC}/json?poll=1&since=12h" | tail -n 1 || true)
+          msg=$(echo "$line" | jq -r '.message // empty' 2>/dev/null || true)
+          if [ -z "$msg" ]; then echo "No announcement."; echo "skip=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+          read -r url sha sig <<< "$msg"
+          printf '%s' "$url $sha" > /tmp/data.txt
+          echo "$sig" | base64 -d > /tmp/sig.bin
+          printf -- '-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAxAgPJATfv64bE6cAdBMHre6jfrxs/hpo+mJpUQr7duo=\n-----END PUBLIC KEY-----\n' > /tmp/pub.pem
+          openssl pkeyutl -verify -pubin -inkey /tmp/pub.pem -rawin -in /tmp/data.txt -sigfile /tmp/sig.bin
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v5
+        if: steps.msg.outputs.skip != '1'
+        with:
+          path: repo
+
+      - name: Apply snapshot
+        id: apply
+        if: steps.msg.outputs.skip != '1'
+        run: |
+          set -euo pipefail
+          if ! curl -fsSL "${{ steps.msg.outputs.url }}" -o /tmp/k.bundle; then echo "Snapshot expired."; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0; fi
+          echo "${{ steps.msg.outputs.sha }}  /tmp/k.bundle" | sha256sum -c -
+          git clone -q -b main /tmp/k.bundle /tmp/src
+          src_sha=$(git -C /tmp/src rev-parse HEAD)
+          if [ "$(cat repo/.kashif-sync 2>/dev/null || true)" = "$src_sha" ]; then
+            echo "Already synced $src_sha"; echo "changed=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          subject=$(git -C /tmp/src log -1 --format=%s)
+          rsync -a --delete --exclude '.git/' --exclude '.github/workflows/' /tmp/src/ repo/
+          echo "$src_sha" > repo/.kashif-sync
+          cd repo
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "$subject" -m "Synced from Kashif source ${src_sha}"
+          git push -q origin HEAD:main
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: sync
+    if: always() && needs.sync.result == 'success' && (needs.sync.outputs.changed == 'true' || github.event_name != 'schedule')
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: '8.11.1'
+      - name: Build
+        run: test -f scripts/ci/build.sh && bash scripts/ci/build.sh || echo "No source synced yet."
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kashif-debug-apk
+          path: android/app/build/outputs/apk/**/*.apk
+          if-no-files-found: ignore
+          retention-days: 14
