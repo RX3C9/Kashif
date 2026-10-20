@@ -22,4 +22,6 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
     api(libs.libphonenumber)
+    testImplementation(libs.junit)
+    api(libs.coroutines.android)
 }

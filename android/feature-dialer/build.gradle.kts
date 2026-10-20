@@ -19,4 +19,5 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(project(":core-data"))
     implementation(libs.androidx.activity.compose)
+    testImplementation(libs.junit)
 }

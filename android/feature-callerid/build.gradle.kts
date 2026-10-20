@@ -19,4 +19,5 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(project(":core-data"))
     implementation(project(":feature-ai"))
+    testImplementation(libs.junit)
 }

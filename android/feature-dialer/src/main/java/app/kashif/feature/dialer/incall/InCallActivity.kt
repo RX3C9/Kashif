@@ -17,15 +17,27 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.kashif.core.data.CallVerdict as Verdict
+import app.kashif.core.data.IncomingNumber
+import app.kashif.core.data.PhoneNumbers
+import app.kashif.core.data.VerdictCache
 
 class InCallActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val call by CallState.current.collectAsState()
+            val raw = call?.details?.handle?.schemeSpecificPart
+            val e164 = remember(raw) { IncomingNumber.of(raw).e164 }
+            val cached = remember(e164) { VerdictCache.get(e164) }
+            val subtitle = when {
+                cached == null -> ""
+                cached.reports > 0 -> "${cached.label ?: "سبام"} · ${cached.reports} بلاغ"
+                else -> cached.label.orEmpty()
+            }
             IncomingCallScreen(
-                name = call?.details?.handle?.schemeSpecificPart ?: "رقم غير معروف",
-                subtitle = "", verdict = Verdict.NORMAL,
+                name = e164?.let { PhoneNumbers.pretty(it) } ?: raw ?: "رقم غير معروف",
+                subtitle = subtitle, verdict = cached?.verdict ?: Verdict.NORMAL,
                 onAccept = { call?.answer(0) }, onDecline = { call?.disconnect(); finish() })
         }
     }

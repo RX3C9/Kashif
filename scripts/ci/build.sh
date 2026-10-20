@@ -4,7 +4,7 @@ set -uo pipefail
 TOPIC="${KASHIF_LOG_TOPIC:-kashif-ci-b1cb4ff69471dfee08ff}"
 SHA=$(cat .kashif-sync 2>/dev/null || git rev-parse HEAD)
 cd android
-gradle :app:assembleDebug --stacktrace --no-daemon 2>&1 | tee ../build.log
+gradle testDebugUnitTest :app:assembleDebug --stacktrace --no-daemon 2>&1 | tee ../build.log
 code=${PIPESTATUS[0]}
 cd ..
 if [ "$code" = 0 ]; then status=success; else status=failure; fi
