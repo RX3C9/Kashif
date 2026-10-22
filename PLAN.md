@@ -35,7 +35,7 @@ Server: `profiles(user_id, username, display_name, public_number_hash?, tier)`, 
   - [x] 1a Core logic: libphonenumber normaliser (EG default, Arabic-Indic digits), hashed number ids, Room DB (BlockRule/SpamEntry/LocalReport/CallNote + DAOs), block-rule matcher (exact/prefix/country/regex/hidden/not-in-contacts), offline spam seed parser, SpamRepository one-tap report (local), ScreeningDecider + real CallScreeningService (contacts check on-device, 3s fail-open), VerdictCache → coloured in-call screen, T9 AR/EN matcher; unit tests; CI runs testDebugUnitTest
   - [x] 1b Default-dialer role request onboarding (RoleManager ROLE_DIALER + ROLE_CALL_SCREENING), permissions flow
   - [x] 1c Call log tab from CallLog provider with verdict colouring + one-tap report/block sheet
-  - [ ] 1d Dialpad screen (T9 results) + outgoing calls via TelecomManager.placeCall; in-call controls (mute/speaker/hold/keypad)
+  - [x] 1d(dialpad+placeCall; in-call controls pending) Dialpad screen (T9 results) + outgoing calls via TelecomManager.placeCall; in-call controls (mute/speaker/hold/keypad)
   - [ ] 1e Block-rules management screen; seed import of bundled offline spam pack
   - [ ] 1f Caller-ID overlay popup (SYSTEM_ALERT_WINDOW) when not default dialer; full AR/EN strings
 - [ ] M2 Backend: Supabase schema + RLS, hash-prefix lookup, reports, business directory, Google + username/password login, admin-web v1

@@ -43,6 +43,7 @@ fun HomeScreen() {
     }
     var rows by remember { mutableStateOf<List<CallRow>>(emptyList()) }
     var selected by remember { mutableStateOf<CallRow?>(null) }
+    var showPad by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     var reload by remember { mutableIntStateOf(0) }
     val hasLog = ContextCompat.checkSelfPermission(ctx, android.Manifest.permission.READ_CALL_LOG) == PackageManager.PERMISSION_GRANTED
@@ -60,7 +61,7 @@ fun HomeScreen() {
             }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {}, shape = RoundedCornerShape(16.dp)) { Icon(Icons.Default.Dialpad, "Dialpad") }
+            FloatingActionButton(onClick = { showPad = true }, shape = RoundedCornerShape(16.dp)) { Icon(Icons.Default.Dialpad, "Dialpad") }
         },
         bottomBar = {
             NavigationBar {
@@ -112,6 +113,7 @@ fun HomeScreen() {
             }
         }
     }
+    if (showPad) DialpadSheet { showPad = false }
     selected?.let { r ->
         ModalBottomSheet(onDismissRequest = { selected = null }) {
             Column(Modifier.padding(16.dp).navigationBarsPadding()) {
