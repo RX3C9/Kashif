@@ -33,7 +33,7 @@ Server: `profiles(user_id, username, display_name, public_number_hash?, tier)`, 
 - [x] M0 Plan, design spec, reuse map, scaffold (this commit)
 - [~] M1 MVP: default-dialer role, in-call UI (Truecaller-style colour states), call log, T9 dialer, CallScreeningService, block rules, offline spam DB, one-tap report, overlay caller-ID, Arabic/English
   - [x] 1a Core logic: libphonenumber normaliser (EG default, Arabic-Indic digits), hashed number ids, Room DB (BlockRule/SpamEntry/LocalReport/CallNote + DAOs), block-rule matcher (exact/prefix/country/regex/hidden/not-in-contacts), offline spam seed parser, SpamRepository one-tap report (local), ScreeningDecider + real CallScreeningService (contacts check on-device, 3s fail-open), VerdictCache → coloured in-call screen, T9 AR/EN matcher; unit tests; CI runs testDebugUnitTest
-  - [ ] 1b Default-dialer role request onboarding (RoleManager ROLE_DIALER + ROLE_CALL_SCREENING), permissions flow
+  - [x] 1b Default-dialer role request onboarding (RoleManager ROLE_DIALER + ROLE_CALL_SCREENING), permissions flow
   - [ ] 1c Call log tab from CallLog provider with verdict colouring + one-tap report/block sheet
   - [ ] 1d Dialpad screen (T9 results) + outgoing calls via TelecomManager.placeCall; in-call controls (mute/speaker/hold/keypad)
   - [ ] 1e Block-rules management screen; seed import of bundled offline spam pack

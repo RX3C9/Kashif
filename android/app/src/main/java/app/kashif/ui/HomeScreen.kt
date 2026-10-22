@@ -14,6 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import android.app.role.RoleManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import app.kashif.onboarding.RoleOnboarding
 
 data class LogRow(val name: String, val sub: String, val spam: Boolean)
 
@@ -21,6 +26,14 @@ data class LogRow(val name: String, val sub: String, val spam: Boolean)
 @Composable
 fun HomeScreen() {
     var tab by remember { mutableIntStateOf(0) }
+    val ctx = LocalContext.current
+    var dialerHeld by remember { mutableStateOf(RoleOnboarding.isHeld(ctx, RoleManager.ROLE_DIALER)) }
+    val roleLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        dialerHeld = RoleOnboarding.isHeld(ctx, RoleManager.ROLE_DIALER)
+    }
+    val permLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        RoleOnboarding.requestIntent(ctx, RoleManager.ROLE_DIALER)?.let { roleLauncher.launch(it) }
+    }
     val rows = remember { listOf(
         LogRow("أحمد علي", "↙ 11:30 ص", false),
         LogRow("احتيال بنكي", "احتيال · 587 بلاغ · 11:10 ص", true),
@@ -51,6 +64,16 @@ fun HomeScreen() {
         }
     ) { pad ->
         LazyColumn(Modifier.padding(pad)) {
+            if (!dialerHeld) item {
+                Card(Modifier.padding(12.dp).fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("اجعل كاشف تطبيق الاتصال الافتراضي", style = MaterialTheme.typography.titleMedium)
+                        Text("لتظهر هوية المتصل وحظر السبام أثناء المكالمات.", color = Color.Gray)
+                        Spacer(Modifier.height(8.dp))
+                        Button(onClick = { permLauncher.launch(RoleOnboarding.permissions) }) { Text("تفعيل") }
+                    }
+                }
+            }
             items(rows) { r ->
                 ListItem(
                     leadingContent = {
