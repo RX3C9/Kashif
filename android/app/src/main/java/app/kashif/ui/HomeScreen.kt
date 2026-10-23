@@ -73,6 +73,7 @@ fun HomeScreen() {
             }
         }
     ) { pad ->
+        if (tab == 4) { BlockRulesScreen(Modifier.padding(pad)); return@Scaffold }
         LazyColumn(Modifier.padding(pad)) {
             if (!dialerHeld) item {
                 Card(Modifier.padding(12.dp).fillMaxWidth()) {
