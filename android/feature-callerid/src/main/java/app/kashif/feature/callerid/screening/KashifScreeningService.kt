@@ -14,6 +14,8 @@ import app.kashif.core.data.KashifDatabase
 import app.kashif.core.data.NumberHash
 import app.kashif.core.data.RuleAction
 import app.kashif.core.data.VerdictCache
+import app.kashif.feature.callerid.overlay.OverlayModel
+import app.kashif.feature.callerid.overlay.OverlayPresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -38,6 +40,11 @@ class KashifScreeningService : CallScreeningService() {
                 val number = rawNumber(details)
                 IncomingNumber.of(number).e164?.let {
                     VerdictCache.put(it, CachedVerdict(decision.verdict, decision.label, decision.reports, System.currentTimeMillis()))
+                }
+                runCatching {
+                    val ar = resources.configuration.locales[0].language == "ar"
+                    OverlayPresenter.show(this@KashifScreeningService,
+                        OverlayModel.of(decision.verdict, decision.label, decision.reports, number, ar))
                 }
                 when (decision.action) {
                     RuleAction.REJECT -> response.setDisallowCall(true).setRejectCall(true).setSkipNotification(true)
