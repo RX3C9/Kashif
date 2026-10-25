@@ -35,6 +35,28 @@ class InCallActivity : ComponentActivity() {
                 cached.reports > 0 -> "${cached.label ?: "سبام"} · ${cached.reports} بلاغ"
                 else -> cached.label.orEmpty()
             }
+            val muted by CallState.muted.collectAsState()
+            val speaker by CallState.speaker.collectAsState()
+            var state by remember { mutableStateOf(call?.state ?: android.telecom.Call.STATE_RINGING) }
+            DisposableEffect(call) {
+                val c = call
+                val cb = object : android.telecom.Call.Callback() {
+                    override fun onStateChanged(call: android.telecom.Call, s: Int) { state = s }
+                }
+                c?.registerCallback(cb)
+                state = c?.state ?: android.telecom.Call.STATE_RINGING
+                onDispose { c?.unregisterCallback(cb) }
+            }
+            LaunchedEffect(call) { if (call == null) finish() }
+            if (state == android.telecom.Call.STATE_ACTIVE || state == android.telecom.Call.STATE_DIALING) {
+                ActiveCallControls(
+                    name = e164?.let { PhoneNumbers.pretty(it) } ?: raw ?: "رقم غير معروف",
+                    muted = muted, speaker = speaker,
+                    onMute = { KashifInCallService.toggleMute() },
+                    onSpeaker = { KashifInCallService.toggleSpeaker() },
+                    onHangup = { call?.disconnect(); finish() })
+                return@setContent
+            }
             IncomingCallScreen(
                 name = e164?.let { PhoneNumbers.pretty(it) } ?: raw ?: "رقم غير معروف",
                 subtitle = subtitle, verdict = cached?.verdict ?: Verdict.NORMAL,
@@ -68,6 +90,29 @@ fun IncomingCallScreen(name: String, subtitle: String, verdict: Verdict, onAccep
             FilledIconButton(onAccept, Modifier.size(72.dp), colors = IconButtonDefaults.filledIconButtonColors(Color(0xFF2BB55A))) {
                 Icon(Icons.Default.Call, "رد", tint = Color.White) }
         }
+        Spacer(Modifier.height(32.dp))
+    }
+}
+
+/** Ongoing call screen with mute / speaker / hang-up. */
+@Composable
+fun ActiveCallControls(name: String, muted: Boolean, speaker: Boolean, onMute: () -> Unit, onSpeaker: () -> Unit, onHangup: () -> Unit) {
+    Column(Modifier.fillMaxSize().background(Color(0xFF08152F)).systemBarsPadding().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+        Spacer(Modifier.height(64.dp))
+        Text(name, color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.Medium)
+        Spacer(Modifier.weight(1f))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+            FilledIconButton(onMute, Modifier.size(64.dp), colors = IconButtonDefaults.filledIconButtonColors(
+                if (muted) Color.White else Color.White.copy(alpha = .2f))) {
+                Icon(if (muted) Icons.Default.MicOff else Icons.Default.Mic, "كتم", tint = if (muted) Color.Black else Color.White) }
+            FilledIconButton(onSpeaker, Modifier.size(64.dp), colors = IconButtonDefaults.filledIconButtonColors(
+                if (speaker) Color.White else Color.White.copy(alpha = .2f))) {
+                Icon(Icons.Default.VolumeUp, "سماعة", tint = if (speaker) Color.Black else Color.White) }
+        }
+        Spacer(Modifier.height(32.dp))
+        FilledIconButton(onHangup, Modifier.size(72.dp), colors = IconButtonDefaults.filledIconButtonColors(Color(0xFFFF5A4E))) {
+            Icon(Icons.Default.CallEnd, "إنهاء", tint = Color.White) }
         Spacer(Modifier.height(32.dp))
     }
 }
