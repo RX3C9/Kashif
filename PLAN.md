@@ -38,7 +38,7 @@ Server: `profiles(user_id, username, display_name, public_number_hash?, tier)`, 
   - [x] 1d(dialpad+placeCall; in-call controls pending) Dialpad screen (T9 results) + outgoing calls via TelecomManager.placeCall; in-call controls (mute/speaker/hold/keypad)
   - [x] 1e Block-rules management screen; seed import of bundled offline spam pack
   - [x] 1f Caller-ID overlay popup (SYSTEM_ALERT_WINDOW) when not default dialer; full AR/EN strings
-- [ ] M2 Backend: Supabase schema + RLS, hash-prefix lookup, reports, business directory, Google + username/password login, admin-web v1
+- [~] M2 Backend (schema done: backend/supabase/migrations/0001_init.sql; client+admin-web pending): Supabase schema + RLS, hash-prefix lookup, reports, business directory, Google + username/password login, admin-web v1
 - [ ] M3 AI: Egyptian scam-pattern model (fake bank/InstaPay/prize/“مكالمة من خدمة العملاء”), SMS phishing scanner, anti-spoof warning, after-call notes/summaries
 - [ ] M4 Assistant: AI screening assistant answering in Egyptian Arabic with live transcript; recording+transcript (where legal); announce caller
 - [ ] M5 Family protection, DND schedules + VIP, dual-SIM rules, widgets, Wear OS, themes & caller-screen designer, heatmap/stats, encrypted backup
